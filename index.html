@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-  .block {
-    fill: #eee;
-  }
   .block text {
     fill: black;
     font: 10px sans-serif;
@@ -15,13 +12,33 @@
 <script src="https://d3js.org/d3.v3.min.js"></script>
 
 <script>
-var data = [1998, 1999, 2000];
+var data = [1998, 1999];
 var blockWidth = 100;
 var blockHeight = 40;
 
 var timeline = d3.select(".timeline")
    .attr("width", 500)
    .attr("height", 200);  
+
+var color = d3.scale.category20();
+
+var shuffle = function() {
+  var accumulatedX = 0;
+  blocks
+    .attr("transform", function(d,i) {
+      var s = "translate(" + accumulatedX + ", 0)";
+      accumulatedX += this.getBBox().width + 1;
+      return s;
+    });
+}
+
+var resize = function() {
+  var n = d3.select(this).select("rect");
+  n.transition()
+    .attr("width", function() { 
+        return +n.attr("width") + 30;
+    });
+}
 
 // blocks will be the selection of all elements with class "block".  None exist
 // initially, but will be be added because we are joining the selection to the 
@@ -30,7 +47,9 @@ var blocks = timeline.selectAll(".block")
      .data(data)
    .enter().append("g") // container that allows us to work from a relative origin
      .attr("class", "year block")
-     .attr("transform", function(d,i) { return "translate(" + i * blockWidth + ", 0)";}); // move it over 'i' blocks
+     .attr("transform", function(d,i) { return "translate(" + i * blockWidth + ", 0)";}) // move it over 'i' blocks
+     .attr("fill",function(d,i){return color(i);})
+     .on("click", resize);
      
 blocks.append("rect")
   .attr("width", blockWidth - 1)
