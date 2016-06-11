@@ -16,6 +16,8 @@
 
 <script>
 var data = [1998, 1999, 2000];
+var blockWidth = 100;
+var blockHeight = 40;
 
 var timeline = d3.select(".timeline")
    .attr("width", 500)
@@ -37,6 +39,6 @@ blocks.append("rect")
 blocks.append("text")
   .attr("x", blockWidth / 2)
   .attr("y", blockHeight / 2)
-  .text(d);
+  .text(function(d) {return d});
   
 </script>
