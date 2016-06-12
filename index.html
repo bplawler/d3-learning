@@ -22,19 +22,63 @@ var timeline = d3.select(".timeline")
 
 var color = d3.scale.category20();
 
-var resize = function() {
-  var n = d3.select(this).select("rect");
-  n.attr("width", function() { 
-      return +n.attr("width") + 30;
-  });
-  blocks
-    .attr("transform", function(d,i) {
-      return "translate(" + recursiveWidth(this) + ", 0)";
-    });
+var nudgeNeighbors = function(el, nudge) {
+  if(el.nextSibling) {
+    d3.select(el.nextSibling)
+      .property("accumX", function() { 
+          return this.accumX + nudge; 
+      }).transition()
+      .attr("transform", function() {
+        return "translate(" + this.accumX + ", 0)";
+      })
+    nudgeNeighbors(el.nextSibling, nudge);
+  }
 }
 
-var recursiveWidth = function(el) {
-  return el.previousSibling ? el.previousSibling.getBBox().width + recursiveWidth(el.previousSibling) + 1 : 0;
+var resize = function(el, newWidth) {
+  var g = d3.select(el)
+  var n = g.select("rect");
+  var oldWidth = +n.attr("width");
+  n.transition().attr("width", function() { return newWidth; });
+  g.select("text").transition().attr("x", newWidth / 2);
+  nudgeNeighbors(el, newWidth - oldWidth);
+}
+
+var toggleExpand = function() {
+  this.isExpanded = !this.isExpanded;
+  if(this.isExpanded) {
+    var g = d3.select(this);
+    var yForNewG = this.getBBox().height + 1;
+    var newG = g.append("g")
+      .attr("transform", function(d,i) {
+        return "translate(0, " + yForNewG + ")";
+      });
+    var blocks = newG.selectAll(".block")
+       .data(["Jan", "Feb", "Mar"])
+     .enter().append("g") // container that allows us to work from a relative origin
+       .attr("class", "year block")
+       .attr("transform", function(d,i) { 
+         return "translate(" + i*blockWidth + ", 0)";
+       }) // move it over 'i' blocks
+       .property("accumX", function(d,i) { return i*blockWidth;})
+       .property("isExpanded", false)
+       .attr("fill",function(d,i){return color(i);})
+       .on("click", toggleExpand);
+
+      blocks.append("rect")
+        .attr("width", blockWidth - 1)
+        .attr("height", blockHeight);
+
+      blocks.append("text")
+        .attr("x", blockWidth / 2)
+        .attr("y", blockHeight / 2)
+        .text(function(d) {return d});
+
+      resize(this, newG.node().getBBox().width);
+  } else {
+    d3.select(this).select("g").remove();
+    resize(this, blockWidth);
+  }
 }
 
 // blocks will be the selection of all elements with class "block".  None exist
@@ -47,8 +91,10 @@ var blocks = timeline.selectAll(".block")
      .attr("transform", function(d,i) { 
        return "translate(" + i*blockWidth + ", 0)";
      }) // move it over 'i' blocks
+     .property("accumX", function(d,i) { return i*blockWidth;})
+     .property("isExpanded", false)
      .attr("fill",function(d,i){return color(i);})
-     .on("click", resize);
+     .on("click", toggleExpand);
      
 blocks.append("rect")
   .attr("width", blockWidth - 1)
