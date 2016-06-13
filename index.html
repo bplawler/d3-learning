@@ -45,10 +45,10 @@ var resize = function(el, newWidth) {
 }
 
 var toggleExpand = function() {
-  this.isExpanded = !this.isExpanded;
-  if(this.isExpanded) {
-    var g = d3.select(this);
-    var yForNewG = this.getBBox().height + 1;
+  this.parentNode.isExpanded = !this.parentNode.isExpanded;
+  if(this.parentNode.isExpanded) {
+    var g = d3.select(this.parentNode);
+    var yForNewG = this.parentNode.getBBox().height + 1;
     var newG = g.append("g")
       .attr("transform", function(d,i) {
         return "translate(0, " + yForNewG + ")";
@@ -62,8 +62,7 @@ var toggleExpand = function() {
        }) // move it over 'i' blocks
        .property("accumX", function(d,i) { return i*blockWidth;})
        .property("isExpanded", false)
-       .attr("fill",function(d,i){return color(i);})
-       .on("click", toggleExpand);
+       .attr("fill",function(d,i){return color(i);});
 
       blocks.append("rect")
         .attr("width", blockWidth - 1)
@@ -74,10 +73,10 @@ var toggleExpand = function() {
         .attr("y", blockHeight / 2)
         .text(function(d) {return d});
 
-      resize(this, newG.node().getBBox().width);
+      resize(this.parentNode, newG.node().getBBox().width);
   } else {
-    d3.select(this).select("g").remove();
-    resize(this, blockWidth);
+    d3.select(this.parentNode).select("g").remove();
+    resize(this.parentNode, blockWidth);
   }
 }
 
@@ -93,12 +92,12 @@ var blocks = timeline.selectAll(".block")
      }) // move it over 'i' blocks
      .property("accumX", function(d,i) { return i*blockWidth;})
      .property("isExpanded", false)
-     .attr("fill",function(d,i){return color(i);})
-     .on("click", toggleExpand);
+     .attr("fill",function(d,i){return color(i);});
      
 blocks.append("rect")
   .attr("width", blockWidth - 1)
-  .attr("height", blockHeight);
+  .attr("height", blockHeight)
+  .on("click", toggleExpand);
 
 blocks.append("text")
   .attr("x", blockWidth / 2)
